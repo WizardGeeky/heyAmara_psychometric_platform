@@ -1,0 +1,100 @@
+{
+    "questions": [
+        {
+            "id": "cog1",
+            "dimension": "cognitive",
+            "text": "When faced with a complex decision, my first instinct is to...",
+            "lowLabel": "Trust my gut and act quickly",
+            "highLabel": "Gather as much data as possible",
+            "weight": 1
+        },
+        {
+            "id": "cog2",
+            "dimension": "cognitive",
+            "text": "I find more value in...",
+            "lowLabel": "Exploring creative possibilities",
+            "highLabel": "Validating logical consistency",
+            "weight": 1
+        },
+        {
+            "id": "cog3",
+            "dimension": "cognitive",
+            "text": "In a team debate, I focus primarily on...",
+            "lowLabel": "The emotional resonance of the idea",
+            "highLabel": "The empirical evidence presented",
+            "weight": 1
+        },
+        {
+            "id": "beh1",
+            "dimension": "behavior",
+            "text": "I feel most productive when...",
+            "lowLabel": "I have complete freedom to define my workflow",
+            "highLabel": "I have a clear framework and set of guidelines",
+            "weight": 1
+        },
+        {
+            "id": "beh2",
+            "dimension": "behavior",
+            "text": "Ambiguity in a project is something I...",
+            "lowLabel": "Thrive on and use as an opportunity",
+            "highLabel": "Try to eliminate through immediate planning",
+            "weight": 1
+        },
+        {
+            "id": "beh3",
+            "dimension": "behavior",
+            "text": "Strict deadlines and detailed reports are...",
+            "lowLabel": "Restrictive and potentially distracting",
+            "highLabel": "Essential for maintaining high-quality output",
+            "weight": 1
+        },
+        {
+            "id": "mot1",
+            "dimension": "motivation",
+            "text": "I am more satisfied by...",
+            "lowLabel": "Maintaining a balanced, predictable routine",
+            "highLabel": "Surpassing a challenging performance target",
+            "weight": 1
+        },
+        {
+            "id": "mot2",
+            "dimension": "motivation",
+            "text": "If I have mastered a task, I prefer to...",
+            "lowLabel": "Continue performing it with excellence",
+            "highLabel": "Move on to something new and difficult",
+            "weight": 1
+        },
+        {
+            "id": "mot3",
+            "dimension": "motivation",
+            "text": "Feedback that highlights areas for growth is...",
+            "lowLabel": "Sometimes stressful if not balanced with praise",
+            "highLabel": "The most valuable part of any review",
+            "weight": 1
+        },
+        {
+            "id": "col1",
+            "dimension": "collaboration",
+            "text": "When tackling a difficult problem, I usually...",
+            "lowLabel": "Work it out alone before sharing",
+            "highLabel": "Brainstorm with colleagues immediately",
+            "weight": 1
+        },
+        {
+            "id": "col2",
+            "dimension": "collaboration",
+            "text": "Success for me is defined by...",
+            "lowLabel": "Recognition of my personal expertise",
+            "highLabel": "The collective impact of my group",
+            "weight": 1
+        },
+        {
+            "id": "col3",
+            "dimension": "collaboration",
+            "text": "Managing interpersonal conflicts at work is...",
+            "lowLabel": "Something I prefer others to handle",
+            "highLabel": "An essential part of driving progress",
+            "weight": 1
+        }
+    ]
+}
