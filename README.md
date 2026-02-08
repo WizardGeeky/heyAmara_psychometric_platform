@@ -26,8 +26,8 @@ A modern, intelligent psychometric assessment platform built with Next.js that a
 
 1. Clone the repository
 ```bash
-git clone <repository-url>
-cd psychometric_test
+git clone https://github.com/WizardGeeky/heyamara_psychometric_platform.git
+cd heyamara_psychometric_platform
 ```
 
 2. Install dependencies
