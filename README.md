@@ -7,7 +7,7 @@ A modern, intelligent psychometric assessment platform built with Next.js that a
 - **🧠 Multi-Dimensional Analysis**: Comprehensive assessment across 4 key dimensions with 12 carefully crafted questions
 - **📊 Real-Time Results**: Dynamic score calculation with visual radar charts and detailed breakdowns
 - **📧 Email Notifications**: Beautiful HTML email templates sent to users with their results and report link
-- **💾 Data Persistence**: User progress saved in Redis with automatic resume capability - works on any platform!
+- **💾 Data Persistence**: User progress saved in MongoDB with automatic resume capability - works on any platform!
 - **📱 Mobile-First Design**: Fully responsive interface optimized for all devices
 - **🎨 Premium UI/UX**: Modern glassmorphism design with smooth animations
 - **📄 PDF Export**: Generate professional PDF reports with assessment data
@@ -52,11 +52,11 @@ EMAIL_FROM=HeyAmara Assessment <noreply@heyamara.ai>
 # Application
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-# Redis Database - Get from Redis Cloud, Upstash, or any Redis provider
-REDIS_URL=redis://default:your-password@your-redis-host:port
+# MongoDB Database - Get from MongoDB Atlas (free tier available)
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/psychometric_platform
 ```
 
-**Important**: You need a Redis database for data persistence. See [START_HERE.md](./START_HERE.md) for setup instructions.
+**Important**: You need a MongoDB database for data persistence. See [MONGODB_SETUP.md](./MONGODB_SETUP.md) for step-by-step setup instructions.
 
 4. Run the development server
 ```bash
@@ -70,7 +70,7 @@ npm run dev
 ```
 ├── app/
 │   ├── api/              # API routes
-│   │   ├── user/         # User data management (Redis)
+│   │   ├── user/         # User data management (MongoDB)
 │   │   └── send-email/   # Email sending endpoint
 │   ├── test/             # Assessment page
 │   ├── results/          # Results display page
@@ -80,7 +80,7 @@ npm run dev
 │   └── Results/          # Results visualization components
 ├── lib/
 │   ├── psychometric-engine.ts  # Core assessment logic
-│   ├── storage.ts        # Redis storage layer
+│   ├── storage.ts        # MongoDB storage layer
 │   └── email.ts          # Email service
 ├── data/
 │   └── questions.json    # Assessment questions (editable)
@@ -155,7 +155,7 @@ function getScoreLabel(score: number): string {
 - **Email**: Nodemailer
 - **PDF**: jsPDF + jsPDF-AutoTable
 - **Icons**: Lucide React
-- **Storage**: Redis (ioredis)
+- **Storage**: MongoDB (official mongodb driver)
 
 ## 📧 Email Configuration
 
@@ -225,10 +225,11 @@ For development, consider using:
 
 ### Deploy to Vercel
 
-1. **Set up Redis Database** (REQUIRED):
-   - Create a free Redis database at [Redis Cloud](https://redis.com/try-free/) or [Upstash](https://upstash.com/)
-   - Copy your `REDIS_URL` connection string
-   - See [START_HERE.md](./START_HERE.md) for detailed instructions
+1. **Set up MongoDB Database** (REQUIRED - FREE):
+   - Create a free MongoDB Atlas account at [mongodb.com/cloud/atlas/register](https://www.mongodb.com/cloud/atlas/register)
+   - Create a free M0 cluster (512 MB storage)
+   - Get your connection string
+   - See [MONGODB_SETUP.md](./MONGODB_SETUP.md) for detailed step-by-step instructions
 
 2. **Push to GitHub**:
    ```bash
@@ -246,7 +247,7 @@ For development, consider using:
 
 4. **Configure Environment Variables**:
    In Vercel project settings, add:
-   - `REDIS_URL` - Your Redis connection string
+   - `MONGODB_URI` - Your MongoDB Atlas connection string
    - `SMTP_HOST`
    - `SMTP_PORT`
    - `SMTP_USER`
@@ -259,15 +260,15 @@ For development, consider using:
    - Wait for deployment to complete
    - Test with a real email to ensure data persistence works
 
-⚠️ **Critical**: Without Redis, user data will NOT persist!
+⚠️ **Critical**: Without MongoDB, user data will NOT persist!
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=<your-repo-url>)
 
 ### Storage Architecture
 
-This application uses **Redis** for persistent data storage, compatible with any Redis provider (Redis Cloud, Upstash, etc.).
+This application uses **MongoDB Atlas** for persistent data storage - a fully managed, cloud-based NoSQL database.
 
-#### Why Redis?
+#### Why MongoDB?
 
 **The Problem with File System Storage:**
 - ❌ Serverless functions have **ephemeral file systems**
@@ -275,21 +276,24 @@ This application uses **Redis** for persistent data storage, compatible with any
 - ❌ Each deployment creates a **new instance** with no previous data
 - ❌ Works locally but **fails in production**
 
-**The Solution - Redis:**
+**The Solution - MongoDB Atlas:**
 - ✅ **Persistent storage** that survives deployments
-- ✅ **Fast** read/write operations
+- ✅ **Document-based** - perfect for user assessment data
+- ✅ **Free tier** - 512 MB storage, perfect for small to medium apps
 - ✅ **Serverless-friendly** with network-based access
 - ✅ **Scalable** to handle concurrent users
-- ✅ **Free tier** available from multiple providers
+- ✅ **Beautiful dashboard** to view and manage data
+- ✅ **Automatic backups** included
+- ✅ **Global clusters** for low latency
 
 #### Data Flow
 
-1. **User submits email** → Check if user exists in Redis
+1. **User submits email** → Check if user exists in MongoDB
 2. **Existing user** → Load progress and redirect to results if completed
-3. **New user** → Create new record in Redis
-4. **During assessment** → Auto-save progress to Redis after each question
-5. **On completion** → Save final scores to Redis and send email
-6. **Return visit** → Load existing data from Redis and show results
+3. **New user** → Create new document in MongoDB
+4. **During assessment** → Auto-save progress to MongoDB after each question
+5. **On completion** → Save final scores to MongoDB and send email
+6. **Return visit** → Load existing data from MongoDB and show results
 
 #### Key Functions
 
@@ -307,7 +311,7 @@ await saveUser({
 });
 ```
 
-For detailed setup instructions, see [START_HERE.md](./START_HERE.md).
+For detailed setup instructions, see [MONGODB_SETUP.md](./MONGODB_SETUP.md).
 
 ### Local Development
 

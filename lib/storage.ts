@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import { MongoClient, Db, Collection } from 'mongodb';
 
 export interface UserData {
     email: string;
@@ -8,80 +8,80 @@ export interface UserData {
     scores?: any;
 }
 
-// Initialize Redis client
-let redis: Redis | null = null;
+// MongoDB client singleton
+let client: MongoClient | null = null;
+let db: Db | null = null;
 
-function getRedisClient(): Redis {
-    if (!redis) {
-        const redisUrl = process.env.REDIS_URL;
+async function getDatabase(): Promise<Db> {
+    if (db) return db;
 
-        if (!redisUrl) {
-            throw new Error('REDIS_URL environment variable is not set');
-        }
+    const mongoUri = process.env.MONGODB_URI;
 
-        redis = new Redis(redisUrl, {
-            maxRetriesPerRequest: 3,
-            retryStrategy: (times) => {
-                const delay = Math.min(times * 50, 2000);
-                return delay;
-            },
-            // Enable TLS for Redis Cloud
-            tls: redisUrl.includes('redislabs.com') || redisUrl.includes('cloud.redislabs') ? {
-                rejectUnauthorized: false
-            } : undefined
-        });
-
-        redis.on('error', (err) => {
-            console.error('Redis connection error:', err);
-        });
-
-        redis.on('connect', () => {
-            console.log('✅ Redis connected successfully');
-        });
+    if (!mongoUri) {
+        throw new Error('MONGODB_URI environment variable is not set');
     }
 
-    return redis;
+    try {
+        client = new MongoClient(mongoUri);
+        await client.connect();
+        db = client.db('psychometric_platform');
+
+        console.log('✅ MongoDB connected successfully');
+
+        // Create index on email for faster lookups
+        const collection = db.collection<UserData>('users');
+        await collection.createIndex({ email: 1 }, { unique: true });
+
+        return db;
+    } catch (error) {
+        console.error('❌ MongoDB connection error:', error);
+        throw error;
+    }
 }
 
-// Key prefix for Redis storage
-const USER_KEY_PREFIX = 'user:';
-const USER_LIST_KEY = 'users:all';
+async function getUsersCollection(): Promise<Collection<UserData>> {
+    const database = await getDatabase();
+    return database.collection<UserData>('users');
+}
 
 /**
- * Get user data by email from Redis
+ * Get user data by email from MongoDB
  */
 export async function getUserByEmail(email: string): Promise<UserData | null> {
     try {
-        const client = getRedisClient();
-        const userKey = `${USER_KEY_PREFIX}${email.toLowerCase()}`;
-        const data = await client.get(userKey);
-
-        if (!data) return null;
-
-        return JSON.parse(data) as UserData;
+        const collection = await getUsersCollection();
+        const user = await collection.findOne({ email: email.toLowerCase() });
+        return user;
     } catch (error) {
-        console.error('Error fetching user from Redis:', error);
+        console.error('Error fetching user from MongoDB:', error);
         return null;
     }
 }
 
 /**
- * Save or update user data in Redis
+ * Save or update user data in MongoDB
  */
 export async function saveUser(userData: UserData): Promise<void> {
     try {
-        const client = getRedisClient();
-        const userKey = `${USER_KEY_PREFIX}${userData.email.toLowerCase()}`;
+        const collection = await getUsersCollection();
+        const email = userData.email.toLowerCase();
 
-        // Save user data with the email as key
-        await client.set(userKey, JSON.stringify(userData));
-
-        // Add email to the set of all users (for potential future listing)
-        await client.sadd(USER_LIST_KEY, userData.email.toLowerCase());
+        // Upsert: update if exists, insert if not
+        await collection.updateOne(
+            { email },
+            {
+                $set: {
+                    ...userData,
+                    email,
+                    updatedAt: new Date().toISOString()
+                }
+            },
+            { upsert: true }
+        );
 
         console.log(`✅ User data saved successfully for: ${userData.email}`);
     } catch (error) {
-        console.error('❌ Error saving user to Redis:', error);
+        console.error('❌ Error saving user to MongoDB:', error);
         throw new Error('Failed to save user data');
     }
 }
@@ -91,17 +91,8 @@ export async function saveUser(userData: UserData): Promise<void> {
  */
 export async function getAllUsers(): Promise<UserData[]> {
     try {
-        const client = getRedisClient();
-        const emails = await client.smembers(USER_LIST_KEY);
-
-        if (!emails || emails.length === 0) return [];
-
-        const users: UserData[] = [];
-        for (const email of emails) {
-            const userData = await getUserByEmail(email);
-            if (userData) users.push(userData);
-        }
-
+        const collection = await getUsersCollection();
+        const users = await collection.find({}).toArray();
         return users;
     } catch (error) {
         console.error('Error fetching all users:', error);
@@ -114,13 +105,9 @@ export async function getAllUsers(): Promise<UserData[]> {
  */
 export async function deleteUser(email: string): Promise<boolean> {
     try {
-        const client = getRedisClient();
-        const userKey = `${USER_KEY_PREFIX}${email.toLowerCase()}`;
-
-        await client.del(userKey);
-        await client.srem(USER_LIST_KEY, email.toLowerCase());
-
-        return true;
+        const collection = await getUsersCollection();
+        const result = await collection.deleteOne({ email: email.toLowerCase() });
+        return result.deletedCount > 0;
     } catch (error) {
         console.error('Error deleting user:', error);
         return false;
@@ -128,11 +115,13 @@ export async function deleteUser(email: string): Promise<boolean> {
 }
 
 /**
- * Close Redis connection (for cleanup)
+ * Close MongoDB connection (for cleanup)
  */
-export async function closeRedis(): Promise<void> {
-    if (redis) {
-        await redis.quit();
-        redis = null;
+export async function closeMongoDB(): Promise<void> {
+    if (client) {
+        await client.close();
+        client = null;
+        db = null;
+        console.log('MongoDB connection closed');
     }
 }
